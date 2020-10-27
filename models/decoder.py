@@ -94,7 +94,7 @@ class EncoderLayer(nn.Module):
         self.drop = nn.Dropout(settings['dropout_p'])
 
     def _add_res_connection(self, x, sublayer, n):
-        return self.layer_norms[n](x + self.drop(sublayer(x)))  # x + self.drop(sublayer(self.layer_norms[n](x)))
+        return x + self.drop(sublayer(self.layer_norms[n](x)))  # x + self.drop(sublayer(self.layer_norms[n](x)))
 
     def forward(self, x, mask):
         x = self._add_res_connection(x, lambda x: self.multi_head_att(x, x, x, mask), 0)
@@ -105,11 +105,12 @@ class Encoder(nn.Module):
     def __init__(self, settings):
         super(Encoder, self).__init__()
         self.layers = nn.ModuleList([EncoderLayer(settings) for _ in range(settings['N_enc'])])
+        self.layer_norm = nn.LayerNorm(settings['d_model'])
 
     def forward(self, x, mask):
         for layer in self.layers:
             x = layer(x, mask)
-        return x
+        return self.layer_norm(x)
 
 
 class DecoderLayer(nn.Module):
@@ -122,7 +123,7 @@ class DecoderLayer(nn.Module):
         self.drop = nn.Dropout(settings['dropout_p'])
 
     def _add_res_connection(self, x, sublayer, n):
-        return self.layer_norms[n](x + self.drop(sublayer(x)))  # x + self.drop(sublayer(self.layer_norms[n](x)))
+        return x + self.drop(sublayer(self.layer_norms[n](x)))  # x + self.drop(sublayer(self.layer_norms[n](x)))
 
     def forward(self, captions, seq_masks, enc_out, att_masks):
         x = self._add_res_connection(captions, lambda x: self.masked_multi_head_att(x, x, x, seq_masks), 0)
@@ -134,11 +135,12 @@ class Decoder(nn.Module):
     def __init__(self, settings):
         super(Decoder, self).__init__()
         self.layers = nn.ModuleList([DecoderLayer(settings) for _ in range(settings['N_dec'])])
+        self.layer_norm = nn.LayerNorm(settings['d_model'])
 
     def forward(self, captions, seq_masks, enc_out, att_masks):
         for layer in self.layers:
             captions = layer(captions, seq_masks, enc_out, att_masks)
-        return captions
+        return self.layer_norm(captions)
 
 
 class Transformer(nn.Module):
