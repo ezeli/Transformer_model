@@ -1,5 +1,5 @@
 # Transformer_model
- - A pytorch implementation of Transformer for image captioning.
+ - A pytorch implementation of [Attention Is All You Need (Transformer)](https://arxiv.org/abs/1706.03762) for image captioning.
  - Add SCST training from "[Self-critical Sequence Training for Image Captioning](https://openaccess.thecvf.com/content_cvpr_2017/html/Rennie_Self-Critical_Sequence_Training_CVPR_2017_paper.html)".
  - Clear and easy to learn.
 
