@@ -3,7 +3,7 @@ import torch
 import skimage.io
 
 from opts import parse_opt
-from models.decoder import Decoder
+from models.decoder import Transformer
 from models.encoder import Encoder
 
 opt = parse_opt()
@@ -18,17 +18,16 @@ img = skimage.io.imread(opt.image_file)
 with torch.no_grad():
     img = encoder.preprocess(img)
     img = img.to(opt.device)
-    fc_feat, att_feat = encoder(img)
+    _, att_feat = encoder(img)
 
 print("====> loading checkpoint '{}'".format(opt.test_model))
 chkpoint = torch.load(opt.test_model, map_location=lambda s, l: s)
-decoder = Decoder(chkpoint['idx2word'], chkpoint['settings'])
-decoder.load_state_dict(chkpoint['model'])
+model = Transformer(chkpoint['idx2word'], chkpoint['settings'])
+model.load_state_dict(chkpoint['model'])
 print("====> loaded checkpoint '{}', epoch: {}, train_mode: {}".
       format(opt.test_model, chkpoint['epoch'], chkpoint['train_mode']))
-decoder.to(opt.device)
-decoder.eval()
+model.to(opt.device)
+model.eval()
 
-rest, _ = decoder.sample(fc_feat, att_feat, beam_size=opt.beam_size,
-                         max_seq_len=opt.max_seq_len)
+rest, _ = model.sample(att_feat, beam_size=opt.beam_size)
 print('generate captions:\n' + '\n'.join(rest))
